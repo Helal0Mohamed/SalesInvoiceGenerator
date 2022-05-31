@@ -19,6 +19,7 @@ import javax.swing.JFileChooser;
 import com.sales.model.bills;
 import com.sales.model.products;
 import java.io.FileWriter;
+import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -51,11 +52,11 @@ public class Controller implements ActionListener, ListSelectionListener {
                 DeleteInvoice();
             break;
             
-            case "Save":
+            case "Add":
                 Save();
             break;
             
-            case "Cancel":
+            case "Delete":
                 Cancel();
             break;
             case "createBillsCancel":
@@ -102,16 +103,21 @@ public class Controller implements ActionListener, ListSelectionListener {
          System.out.println("invoices have brrn read");
          ArrayList<bills> invoiceArray = new ArrayList<> ();
          for (String headerLine: headerLines){
+             try{
            String[] headerParts =  headerLine.split(",");
            int invoiceNum= Integer.parseInt( headerParts[0]);
            String invoiceDate = headerParts[1];
            String customerName = headerParts[2];
            bills invoice=new bills(invoiceNum, invoiceDate, customerName);
            invoiceArray.add(invoice); 
+         } catch( Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(frame, "Error in line format", "Error", JOptionPane.ERROR_MESSAGE);
+         }
          }
          
-         
          System.out.println("checkpoint");
+        
          outcome = fc.showOpenDialog(frame);
          if(outcome == JFileChooser.APPROVE_OPTION){
              File lineFile = fc.getSelectedFile();
@@ -119,6 +125,7 @@ public class Controller implements ActionListener, ListSelectionListener {
              List<String> lineLines = Files.readAllLines(linePath);
                       System.out.println("lines have brrn read");
                       for(String lineLine : lineLines){
+                          try{
                           String lineParts[] =lineLine.split(",");
                           int invoiceNum = Integer.parseInt(lineParts[0]);
                           String itemName = lineParts[1];
@@ -134,6 +141,11 @@ public class Controller implements ActionListener, ListSelectionListener {
                           products line=new products(invoiceNum, itemName, itemPrice, count, inv);
                           inv.getProducts().add(line);
                       }
+                      catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(frame, "Error in line format", "Error", JOptionPane.ERROR_MESSAGE);
+                              }
+         }
              System.out.println("check point");
          }
          frame.setBills(invoiceArray);
@@ -142,9 +154,11 @@ public class Controller implements ActionListener, ListSelectionListener {
          frame.getBillsTable().setModel(billsTableModel);
          frame.getBillsTableModel().fireTableDataChanged();
      }
-      } catch (IOException ex){
-          ex.printStackTrace();
-      }
+      } catch (IOException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Cannot read file", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
     }
 
     private void SaveFile() {
@@ -255,6 +269,19 @@ public class Controller implements ActionListener, ListSelectionListener {
         String date = billsTableWindow1.getBillsDateField().getText();
         String customer =billsTableWindow1.getCustNameField().getText();
         int num = frame.getNextBillNum();
+            try {
+            String[] dateParts = date.split("-");
+            if (dateParts.length < 3) {
+                JOptionPane.showMessageDialog(frame, "Wrong date format", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                int day = Integer.parseInt(dateParts[0]);
+                int month = Integer.parseInt(dateParts[1]);
+                int year = Integer.parseInt(dateParts[2]);
+                if (day > 31 || month > 12) {
+                    JOptionPane.showMessageDialog(frame, "Wrong date format", "Error", JOptionPane.ERROR_MESSAGE);
+                } else{
+        
+        
         bills bills  = new bills(num, date, customer);
         frame.getBills().add(bills);
         frame.getBillsTableModel().fireTableDataChanged();
@@ -262,7 +289,12 @@ public class Controller implements ActionListener, ListSelectionListener {
         billsTableWindow1.dispose();
         billsTableWindow1 = null;
     }
-
+            }
+            } catch (Exception ex) {
+            JOptionPane.showMessageDialog(frame, "Wrong date format", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
     private void createproductCancel() {
         productTableWindow1.setVisible(false);
         productTableWindow1.dispose();
